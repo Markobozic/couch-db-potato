@@ -6,10 +6,10 @@ The program runs from `main.py`. It takes 4 arguments, 2 required, 2 optional.
 
 ### Arguments:
 
-REQUIRED `-f path-to-your-csv-file.csv` -- the path to the csv file from the directory you're running. \n
-REQUIRED `-d your-database-name` -- the name of the database, if it doesn't exist the app will create it for you \n
-OPTIONAL `-u url-where-couchdb-is-running` -- it will default to `localhost` \n
-OPTIONAL `-p port-couchdb-is-running-on` -- it will default to `5984` \n
+(REQUIRED) `-f path-to-your-csv-file.csv` -- the path to the csv file from the directory you're running. <br/>
+(REQUIRED) `-d your-database-name` -- the name of the database, if it doesn't exist the app will create it for you <br/>
+(OPTIONAL) `-u url-where-couchdb-is-running` -- it will default to `localhost` <br/>
+(OPTIONAL) `-p port-couchdb-is-running-on` -- it will default to `5984` <br/>
 
 Python is notorious for import problems, if you see an error like `Cannot find module 'src'` or similar try:
 ```
