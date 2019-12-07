@@ -1,0 +1,6 @@
+/src/freeway_detectors.csv
+/src/freeway_loopdata.csv
+/src/freeway_stations.csv
+/src/highways.csv
+.vs
+/src/__pycache__/

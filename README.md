@@ -20,6 +20,9 @@ For instance this project for me is located at `/Users/Marko/code/couch-db-potat
 
 `export PYTHONPATH="${PYTHONPATH}:/Users/Marko/code/couch-db-potato"`
 
+## CSV files
+The program will look for the detector, station, and highway csv files int he src folder. Make sure they are there before running.
+
 ## Running the application
 
 Running the app looks something like `python3 main.py -f /Users/Marko/code/loop_data.csv -d loop_database` 
