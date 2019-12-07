@@ -52,7 +52,7 @@ class CouchImporter:
             detectors = row[['detectorid','milepost','locationtext','detectorclass','lanenumber']]
 
             data = detectors.to_dict()
-            data["docType"] = 'detector'
+            data["docTypec"] = 'detector'
             data["station"] = stations.to_dict()
             data["highway"] = highways.to_dict()
 
