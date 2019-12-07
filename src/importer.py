@@ -1,6 +1,7 @@
 import csv
 import json
 import requests
+import pandas as pd
 
 
 class CouchImporter:
@@ -34,6 +35,35 @@ class CouchImporter:
             print(f'The database {self.database_name} does not exist ... creating it now.')
             requests.put(f'{self.url}/{self.database_name}')
             print(f'Database {self.database_name} created.')
+
+    def import_detectors_to_couchdb(self):
+        self.test_couchdb_connection()
+        self.create_database_if_nonexistent()
+
+        detectors = pd.read_csv('freeway_detectors.csv', usecols= ["detectorid","stationid","detectorclass","lanenumber"])
+        stations = pd.read_csv('freeway_stations.csv')
+        highways = pd.read_csv('highways.csv')
+
+        merged = detectors.merge(stations.merge(highways, how='left', on='highwayid'), how='left', on='stationid')
+
+        def loadrow(row):
+            stations = row[['stationid','upstream','downstream','stationclass','numberlanes','latlon','length']]
+            highways = row[['highwayid','shortdirection','direction','highwayname']]
+            detectors = row[['detectorid','milepost','locationtext','detectorclass','lanenumber']]
+
+            data = detectors.to_dict()
+            data["docType"] = 'detector'
+            data["station"] = stations.to_dict()
+            data["highway"] = highways.to_dict()
+
+            url = detectors[['detectorid']].to_string(index=False).strip()
+            url = f'{self.url}/{self.database_name}/' + url
+
+            json_data = json.dumps(data)
+            response = requests.put(url, data=json_data, headers={'Content-Type': 'application/json'})
+
+        merged.apply(lambda x: loadrow(x), axis=1)
+        self.cleanup()
 
     def import_csv_to_couchdb(self):
 
