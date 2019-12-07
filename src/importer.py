@@ -52,7 +52,7 @@ class CouchImporter:
             detectors = row[['detectorid','milepost','locationtext','detectorclass','lanenumber']]
 
             data = detectors.to_dict()
-            data["docTypec"] = 'detector'
+            data["docType"] = 'detector'
             data["station"] = stations.to_dict()
             data["highway"] = highways.to_dict()
 
@@ -86,16 +86,19 @@ class CouchImporter:
                 if row[3] == '0':
                     continue
 
+                if (row[0] != '1361' or row[0] != '1362' or row[0] != '1363'):
+                    continue
+
                 datetime = row[1].replace(' ', '_')
 
                 document['_id'] = f'{row[0]}_{datetime}'
                 document['docType'] = 'loop'
                 document['starttime'] = row[1]
-                document['volume'] = row[2]
-                document['speed'] = row[3]
-                document['occupancy'] = row[4]
-                document['status'] = row[5]
-                document['detectorid'] = row[0]
+                document['volume'] = int(row[2])
+                document['speed'] = int(row[3])
+                document['occupancy'] = int(row[4])
+                document['status'] = int(row[5])
+                document['detectorid'] = int(row[0])
 
                 self.document_list.append(document)
                 self.csv_line_counter += 1
