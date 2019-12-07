@@ -59,6 +59,7 @@ class CouchImporter:
                 datetime = row[1].replace(' ', '_')
 
                 document['_id'] = f'{row[0]}_{datetime}'
+                document['docType'] = 'loop'
                 document['starttime'] = row[1]
                 document['volume'] = row[2]
                 document['speed'] = row[3]
