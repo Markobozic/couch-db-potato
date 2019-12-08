@@ -107,6 +107,7 @@ class CouchImporter:
             document['detectorid'] = row['detectorid']
             document['length'] = row['length']
             document['locationtext'] = row['locationtext']
+            document['highwayname'] = row['highwayname']
             
 
             self.document_list.append(document)
