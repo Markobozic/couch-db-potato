@@ -46,8 +46,8 @@ def main():
                        csv_file_path,
                        database_name)
 
-    db.import_detectors_to_couchdb()
-    db.import_csv_to_couchdb()
+
+    db.import_to_couchdb()
 
 
 if __name__ == '__main__':
