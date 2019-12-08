@@ -19,7 +19,7 @@ class CouchImporter:
         self.csv_line_counter = 0
         self.document_count = 0
         self.document_list = []
-        self.maximum_documents_to_bulk_load = 20000
+        self.maximum_documents_to_bulk_load = 20
         
         self.bulk_doc_to_load = {
             "docs": []
@@ -93,9 +93,10 @@ class CouchImporter:
             document = {}
 
             # We don't want detectors with speed 0
-            if row['speed'] == '0':
+            if row['speed'] == 0:
                 continue
 
+            document['_id'] = str(row['detectorid']) + '_' + row['starttime']
             document['_id'] = str(row['detectorid']) + '_' + row['starttime']
             document['starttime'] = row['starttime']
             document['docType'] = 'loop'
