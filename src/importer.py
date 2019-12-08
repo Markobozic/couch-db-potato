@@ -19,7 +19,7 @@ class CouchImporter:
         self.csv_line_counter = 0
         self.document_count = 0
         self.document_list = []
-        self.maximum_documents_to_bulk_load = 50000
+        self.maximum_documents_to_bulk_load = 20000
         
         self.bulk_doc_to_load = {
             "docs": []
@@ -41,23 +41,27 @@ class CouchImporter:
             response = requests.put(f'{self.url}/{self.database_name}')
             print(f'Database {self.database_name} created.')
 
-    def import_to_couchdb(self):
+
+    def import_detectors_to_couchdb(self):
         self.test_couchdb_connection()
         self.create_database_if_nonexistent()
 
-        print("Reading CSV Files")
+        elapsed_time = time.time() - self.start_time
+        print("Reading CSV Files -", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
         detectors = pd.read_csv('src/freeway_detectors.csv', usecols= ["detectorid","stationid","detectorclass","lanenumber"])
         stations = pd.read_csv('src/freeway_stations.csv')
         highways = pd.read_csv('src/highways.csv')
         loopdata = pd.read_csv('src/freeway_loopdata.csv')
 
-        print("Joining CSV Files")
+        elapsed_time = time.time() - self.start_time
+        print("Joining CSV Files -", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
         merged = detectors.merge(stations.merge(highways, how='left', on='highwayid'), how='left', on='stationid')
         merged_loop_data = loopdata.merge(merged, how='left', on='detectorid')
 
-        print("Loading Detector Documents")
+        elapsed_time = time.time() - self.start_time
+        print("Loading Detector Documents -",time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
         #This section loads detectors one by one. Since there are only around 50 this is okay and doesn't take very long
         def load_detectors(row):
@@ -78,9 +82,13 @@ class CouchImporter:
 
         merged.apply(lambda x: load_detectors(x), axis=1)
 
-        print("Preparing Loop Documents")
-
+        elapsed_time = time.time() - self.start_time
+        print("Preparing Loop Documents -", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+        
         for index, row in merged_loop_data.iterrows():
+            if index == 0:
+                elapsed_time = time.time() - self.start_time
+                print("Loading Loop Data -", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
             document = {}
 
@@ -90,6 +98,7 @@ class CouchImporter:
 
             document['_id'] = str(row['detectorid']) + '_' + row['starttime']
             document['starttime'] = row['starttime']
+            document['docType'] = 'loop'
             document['volume'] = row['volume']
             document['speed'] = row['speed']
             document['occupancy'] = row['occupancy']
@@ -121,5 +130,5 @@ class CouchImporter:
         self.document_list = []
         self.bulk_doc_to_load['docs'] = []
         self.document_count = 0
-        elapsed_time = time.time() -self.start_time
+        elapsed_time = time.time() - self.start_time
         print(f'Bulk uploading {self.maximum_documents_to_bulk_load} documents, current document count is {self.csv_line_counter} - ', time.strftime("%H:%M:%S", time.gmtime(elapsed_time)), end="\r")
