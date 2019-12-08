@@ -42,7 +42,7 @@ class CouchImporter:
             print(f'Database {self.database_name} created.')
 
 
-    def import_detectors_to_couchdb(self):
+    def import_to_couchdb(self):
         self.test_couchdb_connection()
         self.create_database_if_nonexistent()
 
