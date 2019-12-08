@@ -19,7 +19,7 @@ class CouchImporter:
         self.csv_line_counter = 0
         self.document_count = 0
         self.document_list = []
-        self.maximum_documents_to_bulk_load = 20
+        self.maximum_documents_to_bulk_load = 20000
         
         self.bulk_doc_to_load = {
             "docs": []
