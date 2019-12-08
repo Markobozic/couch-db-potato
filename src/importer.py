@@ -49,10 +49,10 @@ class CouchImporter:
         elapsed_time = time.time() - self.start_time
         print("Reading CSV Files -", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
-        detectors = pd.read_csv('src/freeway_detectors.csv', usecols= ["detectorid","stationid","detectorclass","lanenumber"])
-        stations = pd.read_csv('src/freeway_stations.csv')
-        highways = pd.read_csv('src/highways.csv')
-        loopdata = pd.read_csv('src/freeway_loopdata.csv')
+        detectors = pd.read_csv('freeway_detectors.csv', usecols= ["detectorid","stationid","detectorclass","lanenumber"])
+        stations = pd.read_csv('freeway_stations.csv')
+        highways = pd.read_csv('highways.csv')
+        loopdata = pd.read_csv('freeway_loopdata.csv')
 
         elapsed_time = time.time() - self.start_time
         print("Joining CSV Files -", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
