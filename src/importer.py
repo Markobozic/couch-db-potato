@@ -2,20 +2,25 @@ import csv
 import json
 import requests
 import pandas as pd
+import simplejson
+import time
 
 
 class CouchImporter:
 
-    def __init__(self, base_url, port, csv_path, database_name):
+    def __init__(self, base_url, port, csv_path, database_name, creds, doc_count):
+        self.start_time = time.time()
         self.base_url = base_url
         self.port = port
-        self.url = f'http://{base_url}:{port}'
+        self.admin_creds = creds
+        self.url = f'http://{self.admin_creds}@{base_url}:{port}'
         self.database_name = database_name
         self.csv_path = csv_path
         self.csv_line_counter = 0
         self.document_count = 0
         self.document_list = []
-        self.maximum_documents_to_bulk_load = 50000
+        self.maximum_documents_to_bulk_load = doc_count
+        
         self.bulk_doc_to_load = {
             "docs": []
         }
@@ -33,20 +38,32 @@ class CouchImporter:
             response.raise_for_status()
         except Exception:
             print(f'The database {self.database_name} does not exist ... creating it now.')
-            requests.put(f'{self.url}/{self.database_name}')
+            response = requests.put(f'{self.url}/{self.database_name}')
             print(f'Database {self.database_name} created.')
 
-    def import_detectors_to_couchdb(self):
+    def import_to_couchdb(self):
         self.test_couchdb_connection()
         self.create_database_if_nonexistent()
+
+        elapsed_time = time.time() - self.start_time
+        print("Reading CSV Files -", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
         detectors = pd.read_csv('freeway_detectors.csv', usecols= ["detectorid","stationid","detectorclass","lanenumber"])
         stations = pd.read_csv('freeway_stations.csv')
         highways = pd.read_csv('highways.csv')
+        loopdata = pd.read_csv('freeway_loopdata.csv')
+
+        elapsed_time = time.time() - self.start_time
+        print("Joining CSV Files -", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
         merged = detectors.merge(stations.merge(highways, how='left', on='highwayid'), how='left', on='stationid')
+        merged_loop_data = loopdata.merge(merged, how='left', on='detectorid')
 
-        def loadrow(row):
+        elapsed_time = time.time() - self.start_time
+        print("Loading Detector Documents -",time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+
+        #This section loads detectors one by one. Since there are only around 50 this is okay and doesn't take very long
+        def load_detectors(row):
             stations = row[['stationid','upstream','downstream','stationclass','numberlanes','latlon','length']]
             highways = row[['highwayid','shortdirection','direction','highwayname']]
             detectors = row[['detectorid','milepost','locationtext','detectorclass','lanenumber']]
@@ -56,53 +73,47 @@ class CouchImporter:
             data["station"] = stations.to_dict()
             data["highway"] = highways.to_dict()
 
-            url = detectors[['detectorid']].to_string(index=False).strip()
-            url = f'{self.url}/{self.database_name}/' + url
+            doc_id = detectors[['detectorid']].to_string(index=False).strip()
+            url = f'{self.url}/{self.database_name}/' + doc_id
 
             json_data = json.dumps(data)
             response = requests.put(url, data=json_data, headers={'Content-Type': 'application/json'})
 
-        merged.apply(lambda x: loadrow(x), axis=1)
-        self.cleanup()
+        merged.apply(lambda x: load_detectors(x), axis=1)
 
-    def import_csv_to_couchdb(self):
+        elapsed_time = time.time() - self.start_time
+        print("Preparing Loop Documents -", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+        
+        for index, row in merged_loop_data.iterrows():
+            if index == 0:
+                elapsed_time = time.time() - self.start_time
+                print("Loading Loop Data -", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
-        self.test_couchdb_connection()
-        self.create_database_if_nonexistent()
+            document = {}
 
-        with open(self.csv_path, 'r') as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
+            # We don't want detectors with speed 0
+            if row['speed'] == 0:
+                continue
 
-            for row in csv_reader:
+            document['_id'] = str(row['detectorid']) + '_' + row['starttime']
+            document['_id'] = str(row['detectorid']) + '_' + row['starttime']
+            document['starttime'] = row['starttime']
+            document['docType'] = 'loop'
+            document['volume'] = row['volume']
+            document['speed'] = row['speed']
+            document['occupancy'] = row['occupancy']
+            document['status'] = row['status']
+            document['detectorid'] = row['detectorid']
+            document['length'] = row['length']
+            document['locationtext'] = row['locationtext']
+            document['highwayname'] = row['highwayname']
+            
 
-                # This is the column names we don't want uploaded
-                if self.csv_line_counter == 0:
-                    self.csv_line_counter += 1
-                    continue
+            self.document_list.append(document)
+            self.csv_line_counter += 1
+            self.document_count += 1
 
-                document = {}
-
-                # We don't want detectors with speed 0
-                if row[3] == '0':
-                    continue
-
-                datetime = row[1].replace(' ', '_')
-
-                document['_id'] = f'{row[0]}_{datetime}'
-                document['docType'] = 'loop'
-                document['starttime'] = row[1]
-                document['volume'] = row[2]
-                document['speed'] = row[3]
-                document['occupancy'] = row[4]
-                document['status'] = row[5]
-                document['detectorid'] = row[0]
-
-                self.document_list.append(document)
-                self.csv_line_counter += 1
-                self.document_count += 1
-
-                if self.document_count == self.maximum_documents_to_bulk_load:
-                    print(f'Bulk uploading 50000 documents, current document count is {self.csv_line_counter}')
+            if self.document_count == self.maximum_documents_to_bulk_load:
                     self.bulk_doc_to_load['docs'] = self.document_list
                     self.bulk_upload_documents_to_couchdb()
                     self.cleanup()
@@ -110,7 +121,7 @@ class CouchImporter:
     def bulk_upload_documents_to_couchdb(self):
         try:
             response = requests.post(f'{self.url}/{self.database_name}/_bulk_docs',
-                                     data=json.dumps(self.bulk_doc_to_load),
+                                     data=simplejson.dumps(self.bulk_doc_to_load, ignore_nan=True),
                                      headers={'Content-type': 'application/json'})
             response.raise_for_status()
         except Exception as err:
@@ -120,10 +131,5 @@ class CouchImporter:
         self.document_list = []
         self.bulk_doc_to_load['docs'] = []
         self.document_count = 0
-
-
-
-
-
-
-
+        elapsed_time = time.time() - self.start_time
+        print(f'Bulk uploading {self.maximum_documents_to_bulk_load} documents, current document count is {self.csv_line_counter} - ', time.strftime("%H:%M:%S", time.gmtime(elapsed_time)), end="\r")
