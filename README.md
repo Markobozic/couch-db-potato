@@ -11,7 +11,7 @@ The program runs from `main.py`. It takes 4 arguments, 2 required, 2 optional.
 (OPTIONAL) `-u url-where-couchdb-is-running` -- it will default to `localhost` <br/>
 (OPTIONAL) `-p port-couchdb-is-running-on` -- it will default to `5984` <br/>
 (OPTIONAL) `-c credentials in username:password format` with permissions to add databases, design documents. <br/>
-(OPTIONAL) `-q `Quantity` of documents to upload at a time -- it will default to `20000`
+(OPTIONAL) `-q quantity of documents to upload at a time` -- it will default to `20000`
 
 Python is notorious for import problems, if you see an error like `Cannot find module 'src'` or similar try:
 ```
