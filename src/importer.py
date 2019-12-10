@@ -8,18 +8,18 @@ import time
 
 class CouchImporter:
 
-    def __init__(self, base_url, port, csv_path, database_name):
+    def __init__(self, base_url, port, csv_path, database_name, creds, doc_count):
         self.start_time = time.time()
         self.base_url = base_url
         self.port = port
-        self.admin_creds = 'admin:project3'
+        self.admin_creds = creds
         self.url = f'http://{self.admin_creds}@{base_url}:{port}'
         self.database_name = database_name
         self.csv_path = csv_path
         self.csv_line_counter = 0
         self.document_count = 0
         self.document_list = []
-        self.maximum_documents_to_bulk_load = 20000
+        self.maximum_documents_to_bulk_load = doc_count
         
         self.bulk_doc_to_load = {
             "docs": []
@@ -40,7 +40,6 @@ class CouchImporter:
             print(f'The database {self.database_name} does not exist ... creating it now.')
             response = requests.put(f'{self.url}/{self.database_name}')
             print(f'Database {self.database_name} created.')
-
 
     def import_to_couchdb(self):
         self.test_couchdb_connection()
