@@ -6,11 +6,11 @@ The program runs from `main.py`. It takes 4 arguments, 2 required, 2 optional.
 
 ### Arguments:
 
-(OPTIONAL) `-f path-to-your-csv-file.csv` -- the path to the csv files from the directory you're running. -- it will default to program directory `''` <br/>
+(OPTIONAL) `-f path-to-your-csv-file.csv` -- the path to the csv files from the directory you're running. -- it will default to program directory <br/>
 (REQUIRED) `-d your-database-name` -- the name of the database, if it doesn't exist the app will create it for you. May need admin credentials for it to work. <br/>
 (OPTIONAL) `-u url-where-couchdb-is-running` -- it will default to `localhost` <br/>
 (OPTIONAL) `-p port-couchdb-is-running-on` -- it will default to `5984` <br/>
-(OPTIONAL) `-c `Credentials in username:password format` with permissions to add databases, design documents. default is `''` <br/>
+(OPTIONAL) `-c credentials in username:password format` with permissions to add databases, design documents. <br/>
 (OPTIONAL) `-q `Quantity` of documents to upload at a time -- it will default to `20000`
 
 Python is notorious for import problems, if you see an error like `Cannot find module 'src'` or similar try:
